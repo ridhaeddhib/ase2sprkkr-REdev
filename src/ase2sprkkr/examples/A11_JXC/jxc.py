@@ -21,13 +21,7 @@ def main():
         current_dir = os.getcwd()
         
         try:
-            potential_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Fe.pot_new')
-            result = calculator.calculate(
-                potential=potential_file,
-                executable_dir='/home/ridha/bin/kkrgen9.4merge',
-                print_output=True,
-                output_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Fe_jxc.out')
-            )
+            result = calculator.calculate(potential='Fe.pot_new')
                 
         except Exception as e:
             print(f"Error during calculation: {str(e)}")

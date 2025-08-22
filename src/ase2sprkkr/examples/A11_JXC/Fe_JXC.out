@@ -15,7 +15,7 @@
           **************************************************************
 
 
-          programm execution  on    22/08/2025    at   17:30:53
+          programm execution  on    22/08/2025    at   17:33:05
 
 
           input file       : standard input
@@ -570,7 +570,7 @@
      exchange tensor elements written to file Fe_JXC_XCPLTEN_Dij_z_Fe.agr
 
 
- CPU - time used in  <GEN>:     23.500 sec
+ CPU - time used in  <GEN>:     23.320 sec
 
 
  *******************************************************************************
@@ -579,8 +579,8 @@
           calculation for task = E-INTEGRAL
           finished in subroutine <KKRGEN>
           Regular stop
-          run time info  CPU         25.173 sec
-                         WALL        23.707 sec
+          run time info  CPU         25.103 sec
+                         WALL        23.565 sec
 
  *******************************************************************************
  *******************************************************************************

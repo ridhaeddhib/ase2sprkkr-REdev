@@ -1,45 +1,16 @@
-import sys
+from ase2sprkkr.sprkkr.calculator import SPRKKR
+from ase2sprkkr.potentials.potentials import Potential
 
-def main():
-    from ase2sprkkr.sprkkr.calculator import SPRKKR
-    import os
-    
-    print("Starting SPRKKR calculation...")
-    
-    try:
-        # Initialize calculator
-        calculator = SPRKKR()
-        
-        # Set input parameters
-        print("Setting up input parameters...")
-        calculator.input_parameters = 'torque'
-        calculator.input_parameters.CONTROL.DATASET = 'Fe'
-        calculator.input_parameters.MODE.MDIR = [1.0, 0.0, 0.0]  # Using floats instead of integers
-        calculator.input_parameters.MODE.MALF = 0.0
-        calculator.input_parameters.MODE.MBET = 45.0
-        calculator.input_parameters.MODE.MGAM = 0.0
-        current_dir = os.getcwd()
-        
-        try:
-            potential_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Fe.pot_new')
-            result = calculator.calculate(
-                potential=potential_file,
-                executable_dir='/home/ridha/bin/kkrgen8.6',
-                print_output=True,
-                output_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Fe_torque.out')
-            )
-                
-        except Exception as e:
-            print(f"Error during calculation: {str(e)}")
-            raise
-        
-    except Exception as e:
-        print(f"Error during calculation: {str(e)}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        return 1
-    
-    return 0
+calculator = SPRKKR()
+calculator.input_parameters = 'torque'
+# This will create the correct InputParameters object for the 'torque' task.
+# Now you can set sub-attributes:
+calculator.input_parameters.CONTROL.DATASET = 'Fe'
+calculator.input_parameters.MODE.MALF = 0.0
+calculator.input_parameters.MODE.MBET = 45.0
+calculator.input_parameters.MODE.MGAM = 0.0
+potential = Potential()
+potential.read_from_file('Fe.pot_new')
+calculator.potential = potential
+calculator.calculate()
 
-if __name__ == '__main__':
-    main()

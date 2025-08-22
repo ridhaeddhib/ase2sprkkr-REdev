@@ -8,164 +8,36 @@ from matplotlib import cm as cm
 import argparse
 import os
 import sys
-
+from ase2sprkkr.potentials import potentials
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
+
 
 class PotentialFileReader:
     def __init__(self, file_name):
         self.file_name = file_name
-        self.compound = ""
-        self.num_nq = 0
-        self.num_nt = 0
-        self.iq = np.array([])
-        self.pos = np.array([])
-        self.icl = np.array([])
-        self.itoq = np.array([])
-        self.conc = np.array([])
-        self.data_labels = np.array([])
-        self.labels = []
-        self.trim_labels = []
-        self.spin_mom = np.array([])
-
-    def file_length(self, fname):
-        with open(fname) as f:
-            for i, l in enumerate(f):
-                pass
-        return i + 1
 
     def read_potential_file(self):
-        if not os.path.exists(self.file_name):
-            raise FileNotFoundError(f"Potential file not found: {self.file_name}")
-            
-        file_size = self.file_length(self.file_name)
-        pot_file = open(self.file_name)    
-        
-        # First pass: get basic dimensions
-        for ln in range(file_size):
-            line = pot_file.readline() 
-            data = line.split()
-            if not data:
-                continue
-                
-            if len(data) > 1 and data[0] == 'NQ':
-                self.num_nq = int(data[1])
-            elif len(data) > 1 and data[0] == 'NT':
-                self.num_nt = int(data[1])
-        
-        # Reset and read all data
-        pot_file.seek(0)
-        for ln in range(file_size):
-            line = pot_file.readline() 
-            data = line.split()
-            if not data:
-                continue
-                
-            if len(data) > 1 and data[0] == 'SYSTEM':
-                self.compound = self.process_system_info(data)
-            elif len(data) > 1 and data[0] == 'NQ':
-                # Already got this, just skip
-                pass
-            elif len(data) > 1 and data[1] == 'QBAS(X)':
-                self.iq, self.pos = self.process_base_vec(pot_file, data, self.num_nq, ln)
-            elif len(data) > 1 and data[1] == 'IREFQ':
-                self.icl, self.itoq, self.conc = self.process_irefq_info(pot_file, data, self.num_nq)
-            elif len(data) > 1 and data[1] == 'TXT_T':
-                self.data_labels, self.labels, self.trim_labels = self.process_txt_t_info(pot_file, data, self.num_nt)
-            elif len(data) > 1 and data[0] == 'MOMENTS':
-                self.spin_mom = self.process_moments_info(pot_file, data, ln, file_size)
-                
-        pot_file.close()
-        
-        return (self.compound, self.num_nq, self.num_nt, self.iq, self.pos, 
-                self.icl, self.itoq, self.conc, self.data_labels, self.labels, 
-                self.trim_labels, self.spin_mom)
-    
+        return read_potential_file(self.file_name)
 
-    def process_system_info(self, data):
-        compound = data[1]
-        print(f"*************Creating input files of {compound} for UppASD simulations*************")
-        return compound
-        
-    def process_base_vec(self, pot_file, data, num_nq, ln):
-        iq = np.zeros(num_nq, dtype=np.int64)
-        pos = np.zeros((num_nq, 3), dtype=np.float64)
-        
-        for i in range(num_nq):
-            line = pot_file.readline()            
-            base_data = line.split()
-            if not base_data or len(base_data) < 4:
-                continue
-            iq[i] = int(base_data[0])
-            pos[i, 0] = float(base_data[1])
-            pos[i, 1] = float(base_data[2])
-            pos[i, 2] = float(base_data[3])
-        return iq, pos
+def read_potential_file(file_name):
+    if not os.path.exists(file_name):
+        raise FileNotFoundError(f"Potential file not found: {file_name}")
+    pot = Potential.read(file_name)
+    compound = pot.compound
+    num_nq = pot.n_atoms
+    num_nt = pot.n_types
+    iq = pot.iq
+    pos = pot.positions
+    icl = pot.icl
+    itoq = pot.itoq
+    conc = pot.conc
+    data_labels = pot.data_labels
+    labels = pot.labels
+    trim_labels = pot.trim_labels
+    spin_mom = pot.spin_mom
 
-    def process_irefq_info(self, pot_file, data, num_nq):
-        icl = np.zeros(num_nq, dtype=np.int64)
-        itoq = np.zeros(num_nq, dtype=np.int64)
-        conc = np.zeros(num_nq, dtype=np.float64)
-        
-        for i in range(num_nq):
-            line = pot_file.readline()
-            base_data = line.split()
-            if len(base_data) < 6:
-                continue
-            icl[i] = int(base_data[1])
-            itoq[i] = int(base_data[4])
-            conc[i] = float(base_data[5])
-        return icl, itoq, conc
-
-    def process_txt_t_info(self, pot_file, data, num_nt):
-        data_labels = np.empty(num_nt, dtype='object')
-        labels = []
-        trim_labels = []
-        
-        for i in range(num_nt):
-            line = pot_file.readline()
-            txt_t_data = line.split()
-            if len(txt_t_data) < 2:
-                continue
-            data_labels[i] = str(txt_t_data[1])
-            labels.append(f'${data_labels[i]}$')
-            ind = str(data_labels[i]).find('_')
-            if ind > 0:
-                trim_labels.append(str(data_labels[i])[:ind])
-            else:
-                trim_labels.append(str(data_labels[i]))
-        return data_labels, labels, trim_labels
-        
-    def process_moments_info(self, pot_file, data, ln, file_size):
-        spin_mom = []
-        reading_moments = False
-        
-        # Continue from current position
-        for _ in range(ln, file_size):
-            line = pot_file.readline()
-            if not line:
-                break
-                
-            data = line.split()
-            if not data:
-                continue
-                
-            if data[0] == 'MOMENTS':
-                reading_moments = True
-                continue
-                
-            if reading_moments and data[0] == 'TYPE':
-                # Read the next line which contains the moment data
-                line = pot_file.readline()
-                data = line.split()
-                if data and len(data) >= 3:
-                    try:
-                        spin_mom.append(float(data[2]))
-                    except ValueError:
-                        pass
-        
-        return np.array(spin_mom)
-
+    return (compound, num_nq, num_nt, iq, pos, icl, itoq, conc, data_labels, labels, trim_labels, spin_mom)
 
 class JXCProcessor:
     def __init__(self, maptype=1):
