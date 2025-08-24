@@ -10,15 +10,15 @@ def input_parameters():
     input_parameters = InputParameters('torque', [
               CONTROL('TORQUE'),
               TAU,
-              MODE, 
+              MODE,
               STRCONST,
               ENERGY(defaults={
-                'EMIN':-0.2, 
+                'EMIN':-0.2,
                 'ImE' : 0.0,
                 'GRID': 8,
                 'NE'  : 36}),
-              TASK('TORQUE').copy([ V('THETAQ', [90.0], info= """the angles characterizing orientation of the direction û"""),
-                  V('PHIQ', [90.0], info="""the angles characterizing orientation of the direction û""")
+              TASK('TORQUE').copy([ V('THETAQ', [90.0], info= """the angles characterizing the orientation of the direction û"""),
+                  V('PHIQ', [90.0], info="""the angles characterizing the orientation of the direction û""")
               ]),
               SITES
           ],
